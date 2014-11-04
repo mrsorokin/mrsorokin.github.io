@@ -1,162 +1,127 @@
+<!DOCTYPE html>
 <html>
-<title>
-    Build a tree
-</title>
-<script src="jquery-2.1.1.min.js"></script>
-<script src="d3.min.js"></script>
-<meta charset="utf-8">
-<head>
-    <div align="left">
-        <div align="left" id="header">
-            <h3 align="left">Артём Бондаренко<br>401ПМиИ</h3>
-            Введите арифмтическое выражение <br>
-            Допустимые операнды: 'A'-'Z', 'a'-'z' <br />
-            Допустимые операции: '+', '-', '*', '/', '^' <br />
-            Допустимые разделители: '(', ')' <br>
-            Пробелы и унарные операции <strong>запрещены</strong> <br>
-            Для нового построения перезагрузите страницу
-            <br>
-        </div>
-    </div>
-
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>SOROKIN</title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
     <style>
+
         .node circle {
-            fill: #000000;
-            stroke: #000000;
-            stroke-width: 2px;
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 1.5px;
         }
-        .node text {
-            font: 20px sans-serif;
+
+        .node {
+            font: 10px sans-serif;
         }
+
         .link {
             fill: none;
-            stroke: #000000;
-            stroke-width: 2px;
+            stroke: #ccc;
+            stroke-width: 1.5px;
         }
-    </style>
-</head>
 
+    </style>
+    <div align="left">
+        <div align="left" id="header">
+            РђРІС‚РѕСЂ: РЎРѕСЂРѕРєРёРЅ РџР°РІРµР», 402
+            Р”РѕРїСѓСЃС‚РёРјС‹Рµ СЃРёРјРІРѕР»С‹: A-Z, a-z, (, ), +, -, *, /
+        </div>
+    </div>
+    <input type="text" id="text" alt="op" size="40" autofocus=""/>
+    <input type="button" onclick="tree()" value="РџРѕСЃС‚СЂРѕРёС‚СЊ"/>
+</head>
 <body>
-<input type="text" id="inp_text" alt="op" size="40" autofocus=""/>
-<input type="button" onclick="fun()" value="Пострить дерево выражения"/>
+
 <script>
-treeData = [];
-function fun()
-{
-    var expression=document.getElementById("inp_text").value;
-    if(expression.length==0)
-    {
-        alert("That's all! Bye!");
-        return 1;
+    treeArray=[];
+    function tree(){
+
+        var t=document.getElementById("text").value;
+
+        if (t.length ==0)
+            return "error";
+
+        for(var i=0;i< t.length;i++)
+            if(!(((t[i]>='A')&&(t[i]<='Z'))||((t[i]>='a')&&(t[i]<='z'))||(t[i]=='+')||(t[i]=='-')||(t[i]=='*')||(t[i]=='/')||(t[i]=='^')||(t[i]=='(')||(t[i]==')')))
+                return "error";
+
+        var OPN=poliz(t);
+        CreateTree(OPN);
+        DrawTree();
+
     }
-    var t;
-    for(var i=0;i<expression.length;i++) //проверка на наличие посторонних символов
-    {
-        t=expression[i];
-        if(!(((t>='A')&&(t<='Z'))||((t>='a')&&(t<='z'))||(t=='+')||(t=='-')||(t=='*')||(t=='/')||(t=='^')||(t=='(')||(t==')')))
+function poliz(t){
+
+    var res=[];
+    var stack=[];
+
+
+    for (var i=0;i< t.length;i++) {
+        if (isv(t[i])==1)
+            res.push(t[i]);
+        else if (t[i] == '(')
+            stack.push(t[i]);
+        else if (t[i] == ')') {
+
+            while (stack[stack.length - 1] != '(') {
+                res.push(stack.pop());
+                if (stack.length == 1 && stack[0] != '(')
+                    return "!";
+            }
+            stack.pop();
+        }
+        else if (prior(t[i]) >= 0)
         {
-            alert("Error! Incorrect Input!");
-            //raw_exp
-            return "Error";
+            if(stack.length!=0)
+             while (prior(t[i]) <= prior(stack[stack.length - 1]))
+                res.push(stack.pop());
+
+            stack.push(t[i]);
         }
     }
-    var OPN=polish(expression);//обратная польская нотация
-    //alert(OPN);
-    create_tree(OPN);
-    Draw();
-    function polish(exp)
-    {
-        var stack=[]; //unshift и shift
-        var result=[];
-        /*alert(Number('A'));
-         alert(Number('^'));
-         alert(Number('z'));*/
-        for(var i=0;i<exp.length;i++)
-        {
-            //alert(i);
-            //alert(stack);
-            //alert(result);
-            if(((exp[i]>='A')&&(exp[i]<='Z'))||((exp[i]>='a')&&(exp[i]<='z')))
-            {
-                result.push(exp[i]);//кладем в итог
-                //alert('Кладем в итог')
-                //alert(exp[i]);
-                continue;
-            }
-            if(exp[i]=='(')
-            {
-                stack.unshift(exp[i]);//кладем в стек
-                continue;
-            }
-            if(exp[i]==')')
-            {
-                while(stack[0]!='(') //пока на вершине стека не окажется '('
-                {
-                    result.push(stack.shift());
-                    if((stack.length==1)&&(stack[0]!='(')) //если стек кончился, но до '(' не дошли
-                    {
-                        alert("Error! Incorrect Input!")
-                        return "Error";
-                    }
-                }
-                if(stack[0]=='(') //если на вершине стека уже '('
-                {
-                    stack.shift();
-                }
-                continue;
-            }
-            if((exp[i]=='+')||(exp[i]=='-')||(exp[i]=='*')||(exp[i]=='/')||(exp[i]=='^'))
-            {
-                while((stack[0]=='+')||(stack[0]=='-')||(stack[0]=='*')||(stack[0]=='/')||(stack[0]=='^'))
-                {
-                    if(priority(exp[i])<=priority(stack[0]))//!!
-                    {
-                        result.push(stack.shift());
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                stack.unshift(exp[i]);
-                continue;
-            }
-        }
         for(var i=0;i<stack.length;i++)
-        {
-            if((stack[i]!='+')&&(stack[i]!='-')&&(stack[i]!='*')&&(stack[i]!='/')&&(stack[i]!='^'))
-            {
-                alert("Error! Unbalanced brackets!")
-                return "Error";
-            }
-        }
+           if(prior(stack[i])<0)
+                return "!";
+
+
         while(stack.length!=0)
-        {
-            result.push(stack.shift());
-        }
-        return result;
+            res.push(stack.pop());
+
+
+        return res;
+
     }
-    function priority(sign)
-    {
-        if((sign=='+')||(sign=='-'))
+
+
+    function prior(c){
+        if((c=='+')||(c=='-'))
             return 0;
-        if((sign=='*')||(sign=='/'))
+        else if((c=='*')||(c=='/'))
             return 1;
-        if(sign=='^')
+        else if(c=='^')
             return 2;
-        alert("Error! Priority undefined!");
-        alert(sign);
-        return "Error";
+        else
+            return -1;
     }
-}
-////////////////////////////////////////////////////////////////////////////////////////////////
-function create_tree(OPN)
+
+    function isv(c) {
+        if (((c >= 'A') && (c <= 'Z')) || ((c >= 'a') && (c <= 'z')))
+            return 1;
+
+        else
+            return 0;
+
+    }
+
+function CreateTree(OPN)
 {
-    //alert(OPN);
+
     var stack = [];
     for(var i = 0; i<OPN.length; i++){
         var element = OPN[i];
-        if((element=='+')||(element=='-')||(element=='*')||(element=='/')||(element=='^')){//проверка на оператор
+        if((element=='+')||(element=='-')||(element=='*')||(element=='/')||(element=='^')){//РїСЂРѕРІРµСЂРєР° РЅР° РѕРїРµСЂР°С‚РѕСЂ
             var second = stack.pop();
             var first = stack.pop();
             var node = {"name": element, "children": [first, second]};
@@ -167,103 +132,56 @@ function create_tree(OPN)
             stack.push(node);
         }
     }
-    treeData[0]=stack[0];
+    treeArray[0]=stack[0];
+
 }
-function Draw() {
-    // ************** Generate the tree diagram	 *****************
-    var margin = {
-                top: 100,
-                right: 100,
-                bottom: 5,
-                left: 100
-            },
-            width = $(window).width()*3/4 - margin.right - margin.left,
-            height = $(window).height() - margin.top - margin.bottom;
 
-    var i = 0;
+    function DrawTree() {
+        var width = 600 ,
+                height = 600;
 
-    var tree = d3.layout.tree()
-            .size([height, width]);
+        var cluster = d3.layout.cluster()
+                .size([height, width-160]);
 
-    var diagonal = d3.svg.diagonal()
-            .projection(function(d) {
-                return [d.x, d.y];
-            });
+        var diagonal = d3.svg.diagonal()
+                .projection(function(d) { return [d.y, d.x]; });
 
-    var svg = d3.select("body").append("svg")
-            .attr("width", width + margin.right + margin.left)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        var svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(40,0)");
 
-    root = treeData[0];
+        root=treeArray[0];
+        update(root);
+        function update(source) {
+            var nodes = cluster.nodes(root),
+                    links = cluster.links(nodes);
 
-    update(root);
+            var link = svg.selectAll(".link")
+                    .data(links)
+                    .enter().append("path")
+                    .attr("class", "link")
+                    .attr("d", diagonal);
 
-    function update(source) {
+            var node = svg.selectAll(".node")
+                    .data(nodes)
+                    .enter().append("g")
+                    .attr("class", "node")
+                    .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
 
-        // Compute the new tree layout.
-        var nodes = tree.nodes(root).reverse(),
-                links = tree.links(nodes);
+            node.append("circle")
+                    .attr("r", 6);
 
-        // Normalize for fixed-depth.
-        nodes.forEach(function(d) {
-            d.y = d.depth * 100;
-        });
+            node.append("text")
+                    .attr("dx", function(d) { return d.children ? -8 : 8; })
+                    .attr("dy", 3)
+                    .style("text-anchor", function(d) { return d.children ? "end" : "start"; })
+                    .text(function(d) { return d.name; });
 
-        // Declare the nodes?
-        var node = svg.selectAll("g.node")
-                .data(nodes, function(d) {
-                    return d.id || (d.id = ++i);
-                });
+        }
+        d3.select(self.frameElement).style("height", height + "px");}
 
-        // Enter the nodes.
-        var nodeEnter = node.enter().append("g")
-                .attr("class", "node")
-                .attr("transform", function(d) {
-                    return "translate(" + d.x + "," + d.y + ")";
-                });
-
-        nodeEnter.append("circle")
-                .attr("r", 22)
-                .style("fill", "#fff");
-
-        nodeEnter.append("text")
-            //	  .attr("y", function(d) {
-            //		  return d.children || d._children ? -18 : 18; })
-                .attr("dy", ".35em")
-                .attr("text-anchor", "middle")
-                .text(function(d) {
-                    return d.name;
-                })
-                .style("fill-opacity", 1);
-
-        nodeEnter.append("text")
-                .attr("y", function(d) {
-                    return d.children || d._children ? -30 : 0; })
-                .attr("x", function(d) {
-                    return d.children || d._children ? 30 : 0; })
-                .attr("dy", ".35em")
-                .attr("text-anchor", "middle")
-                .text(function(d) {
-                    return d.children || d._children ? d.value : "";
-                })
-                .style("font-size", "17px")
-                .style("fill", "#777");
-
-        // Declare the links?
-        var link = svg.selectAll("path.link")
-                .data(links, function(d) {
-                    return d.target.id;
-                });
-
-        // Enter the links.
-        link.enter().insert("path", "g")
-                .attr("class", "link")
-                .attr("d", diagonal);
-
-    }
-}
 
 </script>
 
