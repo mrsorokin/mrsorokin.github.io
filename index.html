@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>Примеры. Добавление на карту большо числа объектов</title>
+    <title>карта</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <!-- Если вы используете API локально, то в URL ресурса необходимо указывать протокол в стандартном виде (http://...)-->
     <script src="//api-maps.yandex.ru/2.1/?lang=ru-RU" type="text/javascript"></script>
@@ -10,8 +10,8 @@
 
 function init () {
     var myMap = new ymaps.Map('map', {
-            center: [55.76, 37.64],
-            zoom: 10
+            center: [66.47, 93.46],
+            zoom: 3
         }),
         objectManager = new ymaps.ObjectManager({
             // Чтобы метки начали кластеризоваться, выставляем опцию.
