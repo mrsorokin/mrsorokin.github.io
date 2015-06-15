@@ -26,7 +26,7 @@ ymaps.ready(function () {
 
             switch (reg.properties.get('osmId')) {
 
-                case '81997':{  reg.options.set('fillColor', 'ff2600'); reg.options.set('balloonContent', 'parapaiii');  break; }
+                case '81997':{  reg.options.set('fillColor', 'ff2600'); reg.options.set('hint', 'parapaiii');  break; }
 case '115134':{  reg.options.set('fillColor', 'ff2600');  break; }
 case '115136':{  reg.options.set('fillColor', 'ff2600');  break; }
 case '102269':{  reg.options.set('fillColor', 'ff2600');  break; }
